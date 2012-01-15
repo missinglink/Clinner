@@ -8,7 +8,7 @@
   <style type="text/css">
     body {
       margin-top: 1.0em;
-      background-color: #5ab1f6;
+      background-color: #fff;
       font-family: Helvetica, Arial, FreeSans, san-serif;
       color: #000000;
     }
@@ -42,15 +42,195 @@
         <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
     </div>
 
+
+
     <h1><a href="https://github.com/ncuesta/Clinner">Clinner</a>
       <span class="small">by <a href="https://github.com/ncuesta">ncuesta</a></span></h1>
 
+    <p><a href="http://travis-ci.org/ncuesta/Clinner"><img src="https://secure.travis-ci.org/ncuesta/Clinner.png" alt="Build Status"></a></p>
+
     <div class="description">
-      Command execution abstraction for PHP.
+      <code>Clinner</code> is a PHP 5.3+ Command-Line Interface commands execution abstraction.
     </div>
 
     
       <p>Clinner is a PHP library that turns command-line programs into PHP objects that can easily be combined with PHP functions to create simple chains of commands and/or plain PHP code.</p>
+
+
+<h2>Advantages</h2>
+
+<p><code>Clinner</code> has the following benefits:</p>
+
+<ul>
+<li>Minimalistic.</li>
+<li>Simple and easy to use.</li>
+<li>Fluent API.</li>
+<li>Higher-level and object oriented interface to commands.</li>
+<li>Command pipes, <strong>regardless of the underlying OS</strong>.</li>
+<li>Commands might be actual command-line executables or PHP code.</li>
+<li><em>Yes, you can mix commands and PHP code in an OO way!</em></li>
+<li>Easily extendable through Interface implementation.</li>
+<li>MIT Licensed.</li>
+</ul><h2>Usage</h2>
+
+<h3>Simple usage</h3>
+
+<p>The most basic use of <code>Clinner</code> consists of including <a href="https://github.com/ncuesta/Clinner/blob/master/clinner.phar?raw=true">the PHAR file</a>
+and using its <code>Command</code> class:</p>
+
+<div class="highlight">
+<pre><span class="x">    // List current working directory's files and store the list as a string</span>
+<span class="x">    require_once 'clinner.phar';</span>
+
+<span class="x">    $command = new \Clinner\Command\Command('ls');</span>
+<span class="x">    $files = $command</span>
+<span class="x">        -&gt;run()</span>
+<span class="x">        -&gt;getOutput();</span>
+<span class="x">    // Or get them as an array</span>
+<span class="x">    $filesArray = $command-&gt;getOutputAsArray();</span>
+
+<span class="x">    if ($command-&gt;getExitCode() === 0) {</span>
+<span class="x">        echo 'Everything went fine.';</span>
+<span class="x">    } else {</span>
+<span class="x">        echo 'Something didn\'t work as expected...';</span>
+<span class="x">    }</span>
+
+<span class="x">    // There's also a factory method that allows to make best use of the fluent API</span>
+<span class="x">    echo \Clinner\Command\Command::create('ls')</span>
+<span class="x">        -&gt;run()</span>
+<span class="x">        -&gt;getOutput();</span>
+</pre>
+</div>
+
+
+<h3>Passing arguments</h3>
+
+<p>Commands crave for arguments, so <code>Clinner</code> offers a way to satisfying them.
+By passing in a second argument to the factory method or the constructor, or using the dedicated setter
+method <code>setArguments()</code>.</p>
+
+<div class="highlight">
+<pre><span class="x">    // Commands will most certainly take arguments, so let's try something with them</span>
+<span class="x">    $command = new \Clinner\Command\Command('cat', array('/etc/hosts'));</span>
+<span class="x">    // This will run `cat /etc/hosts`</span>
+<span class="x">    $command-&gt;run();</span>
+
+<span class="x">    // You might also use its factory method to take even more advantage of the fluent API</span>
+<span class="x">    echo \Clinner\Command\Command::create('cat', array('/etc/hosts'))</span>
+<span class="x">        -&gt;run()</span>
+<span class="x">        -&gt;getOutput();</span>
+</pre>
+</div>
+
+
+<p>Arguments can either be key-value pairs or just values. Key value pairs will be joined using a
+<code>delimiter</code> (see <strong>Options</strong> section for more information).</p>
+
+<h3>Options</h3>
+
+<p>Options allow customization of different <code>Command</code> behaviors. They can be passed in as a third
+argument for the factory method or constructor, or set via the <code>setOptions()</code> method.</p>
+
+<p>Currently there's only one thing that can be customized for the <code>Command</code> class, but it's worth
+noting it: you might specify the delimiter, a <code>string</code> that will be used to join key-value pairs
+of arguments. If not specified, it will default to the equals sign (<code>=</code>).</p>
+
+<p>Let's see an example:</p>
+
+<div class="highlight">
+<pre><span class="x">    // `cut` command won't work if key-value pairs of arguments are joined with '=':</span>
+<span class="x">    $command = \Clinner\Command\Command::create(</span>
+<span class="x">        'cut',</span>
+<span class="x">        array(</span>
+<span class="x">            '-d' =&gt; ':',</span>
+<span class="x">            '-f' =&gt; 1,</span>
+<span class="x">            '/etc/passwd',</span>
+<span class="x">        )</span>
+<span class="x">    );</span>
+
+<span class="x">    $command-&gt;run(); // =&gt; will run `cut -d=: -f=1 /etc/passwd` (WRONG)</span>
+
+<span class="x">    $command-&gt;setOptions(array('delimiter' =&gt; ''));</span>
+
+<span class="x">    $command-&gt;run(); // =&gt; will run `cut -d: -f1 /etc/passwd` (CORRECT)</span>
+</pre>
+</div>
+
+
+<h3>Advanced usage: Commands pipes</h3>
+
+<p>Commands can be piped just like in any Unix shell. The basics of command pipes is that the output
+of a command is sent to the one that is piped to it.</p>
+
+<p>For example, if you want to run <code>ls -a | grep -i clinner</code>, you can:</p>
+
+<div class="highlight">
+<pre><span class="x">    $grepCommand = \Clinner\Command\Command::create('grep', array('-i', 'clinner'));</span>
+<span class="x">    $lsCommand   = \Clinner\Command\Command::create('ls', array('-a'));</span>
+
+<span class="x">    $lsCommand</span>
+<span class="x">        -&gt;pipe($grepCommand)</span>
+<span class="x">        -&gt;run();</span>
+
+<span class="x">    $pipeOutput = $lsCommand-&gt;getOutput();</span>
+
+<span class="x">    // Or the same thing in an uglier but more pro way</span>
+<span class="x">    use \Clinner\Command\Command;</span>
+
+<span class="x">    $pipeOutput = Command::create('ls', array('-a'))</span>
+<span class="x">        -&gt;pipe(Command::create('grep', array('-i', 'clinner')))</span>
+<span class="x">        -&gt;run()</span>
+<span class="x">        -&gt;getOutput();</span>
+</pre>
+</div>
+
+
+<p>Command pipes are not limited to a number of commands, you only need <em>at least</em> two commands.</p>
+
+<p>See next section for a more complex example involving 3 commands in a pipeline.</p>
+
+<h3>Advanced usage: Mixing PHP with commands</h3>
+
+<p>Apart from <code>Command</code> class, <code>Clinner</code> ships with a <code>Callback</code> command class that enables to
+mix both commands and PHP code in a command pipe. <em>Pretty cool, huh?</em></p>
+
+<p><code>Callback</code> class only takes a <code>Closure</code> or a function reference in its constructor and then
+is ready to run. That <code>Closure</code> function will receive the command's input as its first argument
+and is expected to return an exit code. Any information output by the function (either via <code>echo</code>
+or <code>print</code> or any other output method) will be considered as the command output and will be sent
+to the next command in the pipe, if any.</p>
+
+<div class="highlight">
+<pre><span class="x">    // Get all the usernames in the system that contain an 'a' in them</span>
+<span class="x">    $callbackCommand = new Callback(function($input) {</span>
+<span class="x">        foreach (explode("\n", $input) as $line) {</span>
+<span class="x">            if (false !== strchr($line, 'a')) {</span>
+<span class="x">                echo "$line\n";</span>
+<span class="x">            }</span>
+<span class="x">        }</span>
+<span class="x">    });</span>
+
+<span class="x">    $systemUsers = Command::create('cat', array('/etc/passwd'))</span>
+<span class="x">        -&gt;pipe(</span>
+<span class="x">            Command::create('grep', array('-v' =&gt; '^#'), array('delimiter' =&gt; ' '))</span>
+<span class="x">                -&gt;pipe(Command::create('cut', array('-d' =&gt; ':', '-f' =&gt; 1), array('delimiter' =&gt; ''))</span>
+<span class="x">                    -&gt;pipe($callbackCommand)</span>
+<span class="x">                )</span>
+<span class="x">        )</span>
+<span class="x">        -&gt;run()</span>
+<span class="x">        -&gt;getOutputAsArray("\n");</span>
+</pre>
+</div>
+
+
+<h2>Requirements</h2>
+
+<p>The only requirement for <code>Clinner</code> is PHP version &gt;= 5.3.</p>
+
+<h2>Contributing</h2>
+
+<p>Please, feel free to fork this repo and improve it in any way you consider useful
+ -- Pull Requests are welcome!</p>
     
 
     
@@ -97,7 +277,6 @@ If run from source, you'll need Composer. Otherwise, it has no other dependencie
   </div>
 
 <script type="text/javascript">
-
   var _gaq = _gaq || [];
   _gaq.push(['_setAccount', 'UA-28341570-1']);
   _gaq.push(['_trackPageview']);
