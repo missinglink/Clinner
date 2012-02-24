@@ -85,7 +85,7 @@
 <pre><span class="cp">&lt;?php</span>
 
 <span class="c1">// List current working directory's files and store the list as a string</span>
-<span class="k">require_once</span> <span class="s1">'clinner.phar'</span><span class="p">;</span>
+<span class="k">require_once</span> <span class="s1">'phar://clinner.phar/autoload.php'</span><span class="p">;</span>
 
 <span class="nv">$command</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">\Clinner\Command\Command</span><span class="p">(</span><span class="s1">'ls'</span><span class="p">);</span>
 <span class="nv">$files</span> <span class="o">=</span> <span class="nv">$command</span>
